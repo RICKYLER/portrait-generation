@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, useCallback } from "react"
+import Link from "next/link"
 
 const PHRASE = "I love you Guia "
 
@@ -224,24 +225,30 @@ export default function TypographicPortrait() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-[#faf8f5]">
+    <div className="min-h-screen flex flex-col items-center bg-background">
       {/* Header */}
-      <header className="w-full py-8 text-center">
-        <h1
-          className="text-3xl md:text-4xl tracking-wide text-[#2a2320]"
-          style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}
+      <header className="w-full py-8 flex items-center justify-center relative">
+        <Link
+          href="/"
+          className="absolute left-6 top-1/2 -translate-y-1/2 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors tracking-wider uppercase font-sans"
         >
-          I Love You, Guia
-        </h1>
-        <p className="text-sm text-[#8a7e74] mt-2 tracking-widest uppercase" style={{ fontFamily: "'Georgia', serif" }}>
-          A Portrait Made of Words
-        </p>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+          Back
+        </Link>
+        <div className="text-center">
+          <h1 className="text-3xl md:text-4xl tracking-wide text-foreground font-sans">
+            I Love You, Guia
+          </h1>
+          <p className="text-sm text-muted-foreground mt-2 tracking-widest uppercase font-sans">
+            A Portrait Made of Words
+          </p>
+        </div>
       </header>
 
       {/* Controls */}
       <div className="flex flex-wrap items-center justify-center gap-6 mb-6 px-4">
         <div className="flex items-center gap-3">
-          <label className="text-xs text-[#8a7e74] uppercase tracking-wider" style={{ fontFamily: "'Georgia', serif" }}>
+          <label className="text-xs text-muted-foreground uppercase tracking-wider font-sans">
             Text Size
           </label>
           <input
@@ -253,13 +260,13 @@ export default function TypographicPortrait() {
             onChange={(e) => {
               setFontSize(Number(e.target.value))
             }}
-            className="w-28 accent-[#2a2320]"
+            className="w-28 accent-primary"
           />
-          <span className="text-xs text-[#5a4e44] w-6 tabular-nums">{fontSize}</span>
+          <span className="text-xs text-foreground w-6 tabular-nums">{fontSize}</span>
         </div>
 
         <div className="flex items-center gap-3">
-          <label className="text-xs text-[#8a7e74] uppercase tracking-wider" style={{ fontFamily: "'Georgia', serif" }}>
+          <label className="text-xs text-muted-foreground uppercase tracking-wider font-sans">
             Contrast
           </label>
           <input
@@ -271,16 +278,15 @@ export default function TypographicPortrait() {
             onChange={(e) => {
               setContrast(Number(e.target.value))
             }}
-            className="w-28 accent-[#2a2320]"
+            className="w-28 accent-primary"
           />
-          <span className="text-xs text-[#5a4e44] w-8 tabular-nums">{contrast.toFixed(1)}</span>
+          <span className="text-xs text-foreground w-8 tabular-nums">{contrast.toFixed(1)}</span>
         </div>
 
         <button
           onClick={() => renderPortrait()}
           disabled={isRendering}
-          className="px-5 py-2 text-xs uppercase tracking-wider bg-[#2a2320] text-[#faf8f5] hover:bg-[#3d3430] transition-colors disabled:opacity-50"
-          style={{ fontFamily: "'Georgia', serif" }}
+          className="px-5 py-2 text-xs uppercase tracking-wider bg-primary text-primary-foreground hover:opacity-90 transition-all disabled:opacity-50 font-sans"
         >
           {isRendering ? "Rendering..." : "Regenerate"}
         </button>
@@ -289,20 +295,20 @@ export default function TypographicPortrait() {
       {/* Loading state */}
       {(isLoading || isRendering) && (
         <div className="flex flex-col items-center gap-3 mb-4">
-          <div className="w-64 h-1.5 bg-[#e8e2da] overflow-hidden">
+          <div className="w-64 h-1.5 bg-border overflow-hidden">
             <div
-              className="h-full bg-[#2a2320] transition-all duration-300"
+              className="h-full bg-primary transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-xs text-[#8a7e74]" style={{ fontFamily: "'Georgia', serif" }}>
+          <p className="text-xs text-muted-foreground font-sans italic">
             Writing love into every pixel... {progress}%
           </p>
         </div>
       )}
 
       {/* Canvas */}
-      <div className="relative shadow-2xl border border-[#e8e2da] bg-[#ffffff]">
+      <div className="relative shadow-2xl border border-border bg-card">
         <canvas
           ref={canvasRef}
           className="block max-w-full h-auto"
@@ -315,15 +321,13 @@ export default function TypographicPortrait() {
         <div className="flex gap-4 mt-6 mb-10">
           <button
             onClick={handleDownload}
-            className="px-6 py-2.5 text-xs uppercase tracking-wider border border-[#2a2320] text-[#2a2320] hover:bg-[#2a2320] hover:text-[#faf8f5] transition-colors"
-            style={{ fontFamily: "'Georgia', serif" }}
+            className="px-6 py-2.5 text-xs uppercase tracking-wider border border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors font-sans"
           >
             Download PNG
           </button>
           <button
             onClick={handleDownloadHD}
-            className="px-6 py-2.5 text-xs uppercase tracking-wider bg-[#2a2320] text-[#faf8f5] hover:bg-[#3d3430] transition-colors"
-            style={{ fontFamily: "'Georgia', serif" }}
+            className="px-6 py-2.5 text-xs uppercase tracking-wider bg-primary text-primary-foreground hover:opacity-90 transition-all font-sans"
           >
             Download HD
           </button>
@@ -332,10 +336,7 @@ export default function TypographicPortrait() {
 
       {/* Footer note */}
       <footer className="pb-8 text-center">
-        <p
-          className="text-xs text-[#b5aa9e] italic"
-          style={{ fontFamily: "'Georgia', serif" }}
-        >
+        <p className="text-xs text-muted-foreground italic font-sans">
           Every word whispers &ldquo;I love you Guia&rdquo;
         </p>
       </footer>

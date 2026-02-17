@@ -1,5 +1,5 @@
-import TypographicPortrait from "@/components/typographic-portrait"
+import LoveLetterLanding from "@/components/love-letter-landing"
 
 export default function Page() {
-  return <TypographicPortrait />
+  return <LoveLetterLanding />
 }
