@@ -5,6 +5,73 @@ import Link from "next/link"
 
 const PHRASE = "I love you Guia "
 
+interface ColorTheme {
+  name: string
+  textColor: [number, number, number]
+  bgColor: string
+  preview: string
+  accent: string
+}
+
+const COLOR_THEMES: ColorTheme[] = [
+  {
+    name: "Classic Ink",
+    textColor: [20, 15, 15],
+    bgColor: "#ffffff",
+    preview: "#140f0f",
+    accent: "#3a3535",
+  },
+  {
+    name: "Sepia Love",
+    textColor: [90, 55, 30],
+    bgColor: "#fdf8f0",
+    preview: "#5a371e",
+    accent: "#8a6a48",
+  },
+  {
+    name: "Midnight Blue",
+    textColor: [15, 30, 70],
+    bgColor: "#f5f7fc",
+    preview: "#0f1e46",
+    accent: "#2a3f7a",
+  },
+  {
+    name: "Rose Romance",
+    textColor: [120, 25, 50],
+    bgColor: "#fdf5f7",
+    preview: "#781932",
+    accent: "#a83050",
+  },
+  {
+    name: "Forest Whisper",
+    textColor: [20, 60, 40],
+    bgColor: "#f5faf7",
+    preview: "#143c28",
+    accent: "#2a6648",
+  },
+  {
+    name: "Royal Purple",
+    textColor: [55, 20, 80],
+    bgColor: "#f8f5fc",
+    preview: "#371450",
+    accent: "#5a2a80",
+  },
+  {
+    name: "Warm Burgundy",
+    textColor: [100, 20, 30],
+    bgColor: "#fdf6f4",
+    preview: "#64141e",
+    accent: "#8a2a38",
+  },
+  {
+    name: "Ocean Deep",
+    textColor: [10, 55, 75],
+    bgColor: "#f3f9fb",
+    preview: "#0a374b",
+    accent: "#1a6080",
+  },
+]
+
 export default function TypographicPortrait() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -12,6 +79,22 @@ export default function TypographicPortrait() {
   const [fontSize, setFontSize] = useState(4)
   const [contrast, setContrast] = useState(1.4)
   const [isRendering, setIsRendering] = useState(false)
+  const [selectedTheme, setSelectedTheme] = useState(0)
+  const [customColor, setCustomColor] = useState("#140f0f")
+  const [customBg, setCustomBg] = useState("#ffffff")
+  const [useCustom, setUseCustom] = useState(false)
+
+  const getActiveColors = useCallback(() => {
+    if (useCustom) {
+      const hex = customColor.replace("#", "")
+      const r = parseInt(hex.substring(0, 2), 16)
+      const g = parseInt(hex.substring(2, 4), 16)
+      const b = parseInt(hex.substring(4, 6), 16)
+      return { textColor: [r, g, b] as [number, number, number], bgColor: customBg }
+    }
+    const theme = COLOR_THEMES[selectedTheme]
+    return { textColor: theme.textColor, bgColor: theme.bgColor }
+  }, [useCustom, customColor, customBg, selectedTheme])
 
   const renderPortrait = useCallback(
     (customFontSize?: number, customContrast?: number) => {
@@ -23,6 +106,8 @@ export default function TypographicPortrait() {
 
       setIsRendering(true)
       setProgress(0)
+
+      const { textColor, bgColor } = getActiveColors()
 
       const img = new Image()
       img.crossOrigin = "anonymous"
@@ -43,8 +128,8 @@ export default function TypographicPortrait() {
         const imageData = offCtx.getImageData(0, 0, targetWidth, targetHeight)
         const pixels = imageData.data
 
-        // Clear canvas with white
-        ctx.fillStyle = "#ffffff"
+        // Clear canvas with background color
+        ctx.fillStyle = bgColor
         ctx.fillRect(0, 0, targetWidth, targetHeight)
 
         const currentFontSize = customFontSize ?? fontSize
@@ -57,7 +142,6 @@ export default function TypographicPortrait() {
         const totalRows = Math.ceil(targetHeight / lineHeight)
         let rowsDone = 0
 
-        // Process rows in batches for smooth rendering
         const batchSize = 8
         let currentY = 0
 
@@ -70,7 +154,6 @@ export default function TypographicPortrait() {
               const char = PHRASE[charIndex % PHRASE.length]
               charIndex++
 
-              // Sample pixel brightness at this position
               const sampleX = Math.min(Math.floor(x + currentFontSize / 2), targetWidth - 1)
               const sampleY = Math.min(Math.floor(currentY + lineHeight / 2), targetHeight - 1)
               const pixelIndex = (sampleY * targetWidth + sampleX) * 4
@@ -79,26 +162,20 @@ export default function TypographicPortrait() {
               const g = pixels[pixelIndex + 1]
               const b = pixels[pixelIndex + 2]
 
-              // Convert to grayscale (luminance formula)
               const gray = 0.299 * r + 0.587 * g + 0.114 * b
 
-              // Apply contrast curve - darker areas get more opaque text
               let brightness = gray / 255
-              // Apply contrast enhancement
               brightness = Math.pow(brightness, currentContrast)
 
-              // Invert: dark areas in photo = dark text (high opacity)
               const opacity = 1 - brightness
 
-              // Skip very light areas for cleaner look
               if (opacity < 0.03) {
                 const charWidth = ctx.measureText(char).width
                 x += charWidth
                 continue
               }
 
-              // Use black text with varying opacity
-              ctx.fillStyle = `rgba(20, 15, 15, ${Math.min(opacity * 1.2, 1)})`
+              ctx.fillStyle = `rgba(${textColor[0]}, ${textColor[1]}, ${textColor[2]}, ${Math.min(opacity * 1.2, 1)})`
               ctx.fillText(char, x, currentY)
 
               const charWidth = ctx.measureText(char).width
@@ -130,7 +207,7 @@ export default function TypographicPortrait() {
 
       img.src = "/images/reference.png"
     },
-    [fontSize, contrast]
+    [fontSize, contrast, getActiveColors]
   )
 
   useEffect(() => {
@@ -147,9 +224,10 @@ export default function TypographicPortrait() {
   }
 
   const handleDownloadHD = () => {
-    // Render at higher resolution for download
     const canvas = canvasRef.current
     if (!canvas) return
+
+    const { textColor, bgColor } = getActiveColors()
 
     const hdCanvas = document.createElement("canvas")
     const hdCtx = hdCanvas.getContext("2d")!
@@ -172,7 +250,7 @@ export default function TypographicPortrait() {
       const imageData = offCtx.getImageData(0, 0, targetWidth, targetHeight)
       const pixels = imageData.data
 
-      hdCtx.fillStyle = "#ffffff"
+      hdCtx.fillStyle = bgColor
       hdCtx.fillRect(0, 0, targetWidth, targetHeight)
 
       const hdFontSize = fontSize * 2
@@ -207,7 +285,7 @@ export default function TypographicPortrait() {
             continue
           }
 
-          hdCtx.fillStyle = `rgba(20, 15, 15, ${Math.min(opacity * 1.2, 1)})`
+          hdCtx.fillStyle = `rgba(${textColor[0]}, ${textColor[1]}, ${textColor[2]}, ${Math.min(opacity * 1.2, 1)})`
           hdCtx.fillText(char, x, y)
 
           const charWidth = hdCtx.measureText(char).width
@@ -224,10 +302,12 @@ export default function TypographicPortrait() {
     img.src = "/images/reference.png"
   }
 
+  const activeColors = getActiveColors()
+
   return (
     <div className="min-h-screen flex flex-col items-center bg-background">
       {/* Header */}
-      <header className="w-full py-8 flex items-center justify-center relative">
+      <header className="w-full py-8 flex items-center justify-center relative px-4">
         <Link
           href="/"
           className="absolute left-6 top-1/2 -translate-y-1/2 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors tracking-wider uppercase font-sans"
@@ -244,6 +324,130 @@ export default function TypographicPortrait() {
           </p>
         </div>
       </header>
+
+      {/* Color Theme Selector */}
+      <div className="w-full max-w-3xl px-4 mb-6">
+        <p className="text-xs text-muted-foreground uppercase tracking-widest font-sans text-center mb-4">
+          Choose a Color Theme
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          {COLOR_THEMES.map((theme, index) => (
+            <button
+              key={theme.name}
+              onClick={() => {
+                setSelectedTheme(index)
+                setUseCustom(false)
+              }}
+              disabled={isRendering}
+              className="group flex flex-col items-center gap-1.5 disabled:opacity-40 transition-all"
+              aria-label={`Select ${theme.name} theme`}
+            >
+              <div
+                className="relative w-10 h-10 rounded-full border-2 transition-all duration-200 flex items-center justify-center"
+                style={{
+                  backgroundColor: theme.bgColor,
+                  borderColor: !useCustom && selectedTheme === index ? theme.preview : "transparent",
+                  boxShadow: !useCustom && selectedTheme === index ? `0 0 0 2px ${theme.accent}40` : "none",
+                }}
+              >
+                <div
+                  className="w-5 h-5 rounded-full"
+                  style={{ backgroundColor: theme.preview }}
+                />
+                {!useCustom && selectedTheme === index && (
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-foreground flex items-center justify-center">
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-background">
+                      <path d="M20 6 9 17l-5-5"/>
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <span
+                className="text-[10px] tracking-wide font-sans transition-colors"
+                style={{
+                  color: !useCustom && selectedTheme === index ? theme.preview : undefined,
+                }}
+              >
+                {!useCustom && selectedTheme === index ? (
+                  <span className="font-medium">{theme.name}</span>
+                ) : (
+                  <span className="text-muted-foreground">{theme.name}</span>
+                )}
+              </span>
+            </button>
+          ))}
+
+          {/* Custom color option */}
+          <button
+            onClick={() => setUseCustom(true)}
+            disabled={isRendering}
+            className="group flex flex-col items-center gap-1.5 disabled:opacity-40 transition-all"
+            aria-label="Use custom color"
+          >
+            <div
+              className="relative w-10 h-10 rounded-full border-2 transition-all duration-200 overflow-hidden"
+              style={{
+                borderColor: useCustom ? customColor : "transparent",
+                boxShadow: useCustom ? `0 0 0 2px ${customColor}40` : "none",
+              }}
+            >
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: `conic-gradient(
+                    #ff0000, #ff8000, #ffff00, #00ff00, #0080ff, #8000ff, #ff0080, #ff0000
+                  )`,
+                }}
+              />
+              {useCustom && (
+                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-foreground flex items-center justify-center z-10">
+                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-background">
+                    <path d="M20 6 9 17l-5-5"/>
+                  </svg>
+                </div>
+              )}
+            </div>
+            <span className={`text-[10px] tracking-wide font-sans ${useCustom ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+              Custom
+            </span>
+          </button>
+        </div>
+
+        {/* Custom color pickers */}
+        {useCustom && (
+          <div className="flex items-center justify-center gap-6 mt-4 p-4 border border-border rounded-lg bg-card">
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-muted-foreground uppercase tracking-wider font-sans">
+                Text
+              </label>
+              <div className="relative">
+                <input
+                  type="color"
+                  value={customColor}
+                  onChange={(e) => setCustomColor(e.target.value)}
+                  className="w-8 h-8 rounded-full cursor-pointer border border-border overflow-hidden appearance-none bg-transparent [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded-full [&::-webkit-color-swatch]:border-none"
+                />
+              </div>
+              <span className="text-xs text-muted-foreground font-mono">{customColor}</span>
+            </div>
+            <div className="w-px h-6 bg-border" />
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-muted-foreground uppercase tracking-wider font-sans">
+                Background
+              </label>
+              <div className="relative">
+                <input
+                  type="color"
+                  value={customBg}
+                  onChange={(e) => setCustomBg(e.target.value)}
+                  className="w-8 h-8 rounded-full cursor-pointer border border-border overflow-hidden appearance-none bg-transparent [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded-full [&::-webkit-color-swatch]:border-none"
+                />
+              </div>
+              <span className="text-xs text-muted-foreground font-mono">{customBg}</span>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Controls */}
       <div className="flex flex-wrap items-center justify-center gap-6 mb-6 px-4">
@@ -297,8 +501,11 @@ export default function TypographicPortrait() {
         <div className="flex flex-col items-center gap-3 mb-4">
           <div className="w-64 h-1.5 bg-border overflow-hidden">
             <div
-              className="h-full bg-primary transition-all duration-300"
-              style={{ width: `${progress}%` }}
+              className="h-full transition-all duration-300"
+              style={{
+                width: `${progress}%`,
+                backgroundColor: useCustom ? customColor : COLOR_THEMES[selectedTheme].preview,
+              }}
             />
           </div>
           <p className="text-xs text-muted-foreground font-sans italic">
@@ -308,7 +515,10 @@ export default function TypographicPortrait() {
       )}
 
       {/* Canvas */}
-      <div className="relative shadow-2xl border border-border bg-card">
+      <div
+        className="relative shadow-2xl border border-border"
+        style={{ backgroundColor: activeColors.bgColor }}
+      >
         <canvas
           ref={canvasRef}
           className="block max-w-full h-auto"
